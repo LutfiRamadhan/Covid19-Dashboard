@@ -11,9 +11,10 @@ import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import Moment from 'moment';
 import mapDataWorld from 'components/Highmaps/world-highres';
-require('highcharts/modules/map')(Highcharts);
 
 import { getTimeline, getSummary, getDataCountries } from 'actions/NovelCovid';
+
+require('highcharts/modules/map')(Highcharts);
 
 const MyLoader = (props) => (
     <ContentLoader 
@@ -39,6 +40,10 @@ const TimelineCoronaApiCharts = ({ timeline_data }) => {
 
         title: {
             text: 'Graph of the growth of the coronavirus in the world'
+        },
+
+        subtitle: {
+            text: 'src: https://corona.lmao.ninja/'
         },
 
         rangeSelector: {
@@ -182,10 +187,15 @@ const topTenCountryChart = ({data, title}) => {
     const options = {
         chart: {
             type: 'bar',
+            marginTop: 130
         },
 
         title: {
             text: title
+        },
+
+        subtitle: {
+            text: 'src: https://corona.lmao.ninja/'
         },
 
         xAxis: {
@@ -220,14 +230,14 @@ const topTenCountryChart = ({data, title}) => {
             alignColumns: true,
             verticalAlign: 'top',
             x: 0,
-            y: 60,
+            y: 70,
             floating: true,
             borderWidth: 1,
             backgroundColor:
                 Highcharts.defaultOptions.legend.backgroundColor || '#FFFFFF',
             shadow: true,
+            width: 485,
             itemDistance: 5,
-            // width: 495
         },
         credits: {
             enabled: false
@@ -264,15 +274,19 @@ const topTenCountryChart = ({data, title}) => {
     )
 }
 
-const worldMap = ({data}) => {
-    const mapOptions = {
+let mapOptions = {}
+
+const worldMap = ({rawData}) => {
+    const asdawe = rawData.map((v, i) => {
+        return {'hc-key': v.countryInfo.iso2 === null ? v.countryInfo.iso3: v.countryInfo.iso2, value: v.cases }
+    });
+
+    console.log(asdawe);
+
+    mapOptions = {
 
         title: {
             text: null
-        },
-
-        mapNavigation: {
-            enabled: true
         },
 
         colorAxis: {
@@ -291,40 +305,15 @@ const worldMap = ({data}) => {
         },
 
         series: [{
-            data: data,
             mapData: mapDataWorld,
-            joinBy: ['hc-key', 'key'],
-            name: 'Map ',
-            states: {
-                hover: {
-                    color: Highcharts.getOptions().colors[2]
-                }
-            },
-            dataLabels: {
-                enabled: showDataLabels,
-                formatter: function () {
-                    return mapKey === 'custom/world' || mapKey === 'countries/us/us-all' ?
-                        (this.point.properties && this.point.properties['hc-a2']) :
-                        this.point.name;
-                }
-            },
-        }, {
-            type: 'mapline',
-            name: "Separators",
-            data: Highcharts.geojson(mapDataWorld, 'mapline'),
-            nullColor: 'gray',
-            showInLegend: false,
-            enableMouseTracking: false
+            data: asdawe,
+            // joinBy: ['hc-key', 'name'],
+            animation: true,
+            name: 'World',
         }]
     };
     
-    return (
-        <HighchartsReact
-          options={mapOptions}
-          constructorType={'mapChart'}
-          highcharts={Highcharts}
-        />
-    );
+    return 0;
 }
 
 class DashboardPage extends React.Component {
@@ -502,7 +491,64 @@ class DashboardPage extends React.Component {
                 <div className="col-12">
                     <Card className="shadow border-0">
                         <CardBody>
-                            {worldMap}
+                            {/* { dataCountryReady && worldMap({rawData: country_data.rawData})} */}
+                            {dataCountryReady && <HighchartsReact
+                                options={{
+
+                                    title: {
+                                        text: 'Map of analysis of the number of corona virus patients in the world'
+                                    },
+
+                                    subtitle: {
+                                        text: 'src: https://corona.lmao.ninja/'
+                                    },
+                                    
+                                    mapNavigation: {
+                                        enabled: true
+                                    },
+                            
+                                    colorAxis: {
+                                        min: 0,
+                                        stops: [[0, '#EFEFFF'], [0.1, '#f5e9e8'], [0.2, '#ebd4d2'], [0.3, '#e1bfbc'], [0.4, '#d7aaa6'], [0.5, '#cd9590'], [0.6, '#c37f7a'], [0.7, '#b96a64'], [0.8, '#af554e'], [0.9, '#a54038'], [1, '#9C2B22']],
+                                    },
+                            
+                                    legend: {
+                                        layout: 'vertical',
+                                        align: 'left',
+                                        verticalAlign: 'bottom'
+                                    },
+                            
+                                    series: [{
+                                        mapData: mapDataWorld,
+                                        data: country_data.dataCovidDunia,
+                                        animation: true,
+                                        name: 'World',
+                                        states: {
+                                            hover: {
+                                                color: Highcharts.getOptions().colors[1]
+                                            }
+                                        },
+                                        dataLabels: {
+                                            enabled: true,
+                                            format: '{point.name}'
+                                        },
+                                    }],
+
+                                    tooltip: {
+                                        formatter: function(){
+                                            console.log(this.point)
+                                            var s = `<tspan style="fill: ${this.point.color}">●</tspan> <span style="color: 'black'">${this.key}</span><br/>`;
+                                            s += 'Cases: ' + this.point.options.data.cases.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + '<br/>';
+                                            s += 'Active: ' + this.point.options.data.active.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + '<br/>';
+                                            s += 'Recovered: ' + this.point.options.data.recovered.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + '<br/>';
+                                            s += 'Deaths: ' + this.point.options.data.deaths.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                                            return s;
+                                        },
+                                    },
+                                }}
+                                constructorType={'mapChart'}
+                                highcharts={Highcharts}
+                            />}
                         </CardBody>
                     </Card>
                 </div>
@@ -541,7 +587,21 @@ class DashboardPage extends React.Component {
                 <div className="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
                     <Card className="shadow border-0">
                         <CardBody>
-                            { dataCountryReady && topTenCountryChart({data: country_data.deaths, title: 'The 10 countries with the most deaths from the corona virus in the world'}) }
+                            { dataCountryReady && topTenCountryChart({data: country_data.deaths, title: 'The 10 countries with the most deaths due to the corona virus in the world'}) }
+                        </CardBody>
+                    </Card>
+                </div>
+                <div className="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
+                    <Card className="shadow border-0">
+                        <CardBody>
+                            { dataCountryReady && topTenCountryChart({data: country_data.recoveredRate, title: '10 countries with the highest cure rates of the total corona virus (%)'}) }
+                        </CardBody>
+                    </Card>
+                </div>
+                <div className="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
+                    <Card className="shadow border-0">
+                        <CardBody>
+                            { dataCountryReady && topTenCountryChart({data: country_data.deathsRate, title: 'The 10 countries with the highest death rates from the total corona virus (%)'}) }
                         </CardBody>
                     </Card>
                 </div>

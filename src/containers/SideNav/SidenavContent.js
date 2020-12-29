@@ -123,6 +123,11 @@ class SidenavContent extends Component {
                   <span className="nav-text">Dashboard</span>
                 </NavLink>
               </li>
+              <li>
+                <NavLink to="/app/worldwide/datatable">
+                  <span className="nav-text">Data Table</span>
+                </NavLink>
+              </li>
             </ul>
           </li>
 

@@ -14,7 +14,7 @@ import {
     summaryReady: false,
     timelineReady: false,
     dataCountryReady: false,
-    country_data: {},
+    country_data: [],
     timeline_data: [],
     summary_data: {
         updated: 0,
